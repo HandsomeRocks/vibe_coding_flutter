@@ -22,7 +22,7 @@ A modern Flutter application with login functionality and a comprehensive dashbo
 - Welcome section with gradient card
 - Quick stats with colorful stat cards
 - Recent activity feed
-- Bottom navigation with multiple tabs
+- Toggleable navigation drawer
 - Logout functionality
 
 ## Getting Started
@@ -38,8 +38,8 @@ A modern Flutter application with login functionality and a comprehensive dashbo
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd new_bbb_app
+   git clone https://github.com/HandsomeRocks/vibe_coding_flutter.git
+   cd vibe_coding_flutter
    ```
 
 2. **Install dependencies**
@@ -102,6 +102,80 @@ flutter build apk --release
 ```bash
 flutter build ios --release
 ```
+
+## Google Play Store Deployment
+
+### Prerequisites for Google Play Store
+1. **Google Play Console Account**: Sign up at [Google Play Console](https://play.google.com/console)
+2. **App Signing**: Set up app signing in Google Play Console
+3. **Privacy Policy**: Create a privacy policy for your app
+4. **App Content Rating**: Complete the content rating questionnaire
+
+### Generate App Bundle (Recommended for Google Play Store)
+The Android App Bundle (AAB) is the recommended format for Google Play Store as it creates optimized APKs for different device configurations.
+
+```bash
+# Generate release app bundle
+flutter build appbundle --release
+
+# The output will be located at:
+# build/app/outputs/bundle/release/app-release.aab
+```
+
+### Generate APK (Alternative)
+If you need a traditional APK file:
+
+```bash
+# Generate release APK
+flutter build apk --release
+
+# Generate split APKs for different architectures
+flutter build apk --split-per-abi --release
+
+# The outputs will be located at:
+# build/app/outputs/flutter-apk/app-release.apk
+# build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+# build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+# build/app/outputs/flutter-apk/app-x86_64-release.apk
+```
+
+### Testing the Build
+Before uploading to Google Play Store, test your build:
+
+```bash
+# Install the APK on a connected device
+flutter install --release
+
+# Or install the app bundle (requires bundletool)
+# First, download bundletool from: https://github.com/google/bundletool
+# Then convert AAB to APK for testing:
+# java -jar bundletool.jar build-apks --bundle=app-release.aab --output=app-release.apks
+```
+
+### Upload to Google Play Store
+1. **Sign in** to [Google Play Console](https://play.google.com/console)
+2. **Create a new app** or select existing app
+3. **Go to Production** track
+4. **Create new release**
+5. **Upload** your `.aab` file (recommended) or `.apk` file
+6. **Add release notes** describing your changes
+7. **Review and roll out** to production
+
+### App Bundle Benefits
+- **Smaller download sizes**: Users download only the code they need
+- **Optimized for device**: Automatic optimization for different screen densities and CPU architectures
+- **Faster downloads**: Reduced bandwidth usage
+- **Better performance**: Optimized for each device type
+
+### Version Management
+Update your app version in `pubspec.yaml`:
+
+```yaml
+version: 1.0.0+1  # version_name + version_code
+```
+
+- **version_name**: User-visible version (1.0.0)
+- **version_code**: Internal version number for Google Play Store (1)
 
 ## Customization
 

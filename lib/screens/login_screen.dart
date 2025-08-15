@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'otp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,20 +11,45 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _consultantCodeController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
-  bool _obscurePassword = true;
+  bool _obscureConsultantCode = true;
+  String? _selectedUserType;
+  
+  final List<String> _userTypes = ['Sales Consultant', 'Customer'];
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _mobileController.dispose();
+    _consultantCodeController.dispose();
     super.dispose();
   }
 
-  Future<void> _signIn() async {
+    Future<void> _signIn() async {
+    // Custom validation for conditional fields
+    if (_selectedUserType == 'Sales Consultant') {
+      if (_consultantCodeController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter your consultant code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      if (!RegExp(r'^\d{5,7}$').hasMatch(_consultantCodeController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Consultant code must be 5-7 digits'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+    
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -31,16 +57,17 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final success = await _authService.signIn(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid email or password'),
-            backgroundColor: Colors.red,
+      // Simulate authentication (replace with actual auth logic)
+      await Future.delayed(const Duration(seconds: 1));
+      
+      if (mounted) {
+        // Navigate to OTP screen on successful login
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => OTPScreen(
+              mobileNumber: _mobileController.text.trim(),
+              userType: _selectedUserType ?? 'Customer',
+            ),
           ),
         );
       }
@@ -135,14 +162,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 32),
 
-                          // Email Field
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
+                          // User Type Dropdown
+                          DropdownButtonFormField<String>(
+                            value: _selectedUserType,
                             decoration: InputDecoration(
-                              labelText: 'Email',
-                              hintText: 'Enter your email',
-                              prefixIcon: const Icon(Icons.email_outlined),
+                              labelText: 'Login as',
+                              hintText: 'Select your role',
+                              prefixIcon: const Icon(Icons.person_outline),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -160,39 +186,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
+                            items: _userTypes.map((String userType) {
+                              return DropdownMenuItem<String>(
+                                value: userType,
+                                child: Text(userType),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedUserType = newValue;
+                              });
+                            },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                  .hasMatch(value)) {
-                                return 'Please enter a valid email';
+                                return 'Please select your role';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 16),
 
-                          // Password Field
+                          // Mobile Number Field
                           TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
+                            controller: _mobileController,
+                            keyboardType: TextInputType.phone,
                             decoration: InputDecoration(
-                              labelText: 'Password',
-                              hintText: 'Enter your password',
-                              prefixIcon: const Icon(Icons.lock_outlined),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                              ),
+                              labelText: 'Mobile Number',
+                              hintText: 'Enter your mobile number',
+                              prefixIcon: const Icon(Icons.phone_outlined),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -212,14 +233,70 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
+                                return 'Please enter your mobile number';
                               }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
+                              // Basic mobile number validation (10-15 digits)
+                              if (!RegExp(r'^\+?[\d\s-]{10,15}$').hasMatch(value)) {
+                                return 'Please enter a valid mobile number';
                               }
                               return null;
                             },
                           ),
+                          const SizedBox(height: 16),
+
+                          // Consultant Code Field (only for Sales Consultant)
+                          if (_selectedUserType == 'Sales Consultant') ...[
+                            TextFormField(
+                              controller: _consultantCodeController,
+                              obscureText: _obscureConsultantCode,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Consultant Code',
+                                hintText: 'Enter your 5-7 digit code',
+                                prefixIcon: const Icon(Icons.security_outlined),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConsultantCode
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConsultantCode = !_obscureConsultantCode;
+                                    });
+                                  },
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey[300]!,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (_selectedUserType == 'Sales Consultant') {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your consultant code';
+                                  }
+                                  if (!RegExp(r'^\d{5,7}$').hasMatch(value)) {
+                                    return 'Consultant code must be 5-7 digits';
+                                  }
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                           const SizedBox(height: 24),
 
                           // Login Button
@@ -274,7 +351,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Demo: Use any valid email and password (min 6 chars)',
+                                    _selectedUserType == 'Sales Consultant'
+                                        ? 'Demo: Use any valid mobile number and 5-7 digit consultant code'
+                                        : 'Demo: Use any valid mobile number to proceed',
                                     style: TextStyle(
                                       color: Colors.blue[700],
                                       fontSize: 12,

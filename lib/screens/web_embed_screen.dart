@@ -35,7 +35,6 @@ class _WebEmbedScreenState extends State<WebEmbedScreen> {
   }
 
   void _buildUrl() {
-    // Build the final URL with parameters
     String finalUrl = widget.url;
     if (widget.parameters != null && widget.parameters!.isNotEmpty) {
       final queryParams = widget.parameters!.entries
@@ -49,16 +48,10 @@ class _WebEmbedScreenState extends State<WebEmbedScreen> {
 
   void _createIframe() {
     if (kIsWeb) {
-      // Add console logging for debugging
-      html.window.console.log('Creating iframe for URL: $_finalUrl');
-
       // Register the iframe factory using the official Flutter method
       ui.platformViewRegistry.registerViewFactory(
         _iframeElementId,
         (int viewId) {
-          html.window.console
-              .log('Registering iframe factory for: $_iframeElementId');
-
           final iframeElement = html.IFrameElement()
             ..src = _finalUrl
             ..style.border = 'none'
@@ -71,7 +64,6 @@ class _WebEmbedScreenState extends State<WebEmbedScreen> {
 
           // Add error handling
           iframeElement.onError.listen((event) {
-            html.window.console.error('Iframe error for $_finalUrl');
             if (mounted) {
               setState(() {
                 _isLoading = false;
@@ -84,8 +76,6 @@ class _WebEmbedScreenState extends State<WebEmbedScreen> {
 
           // Add load event listener
           iframeElement.onLoad.listen((event) {
-            html.window.console
-                .log('Iframe loaded successfully for: $_finalUrl');
             if (mounted) {
               setState(() {
                 _isLoading = false;
@@ -101,7 +91,6 @@ class _WebEmbedScreenState extends State<WebEmbedScreen> {
       // Set a timeout for loading
       Future.delayed(const Duration(seconds: 10), () {
         if (mounted && _isLoading) {
-          html.window.console.warn('Iframe loading timeout for: $_finalUrl');
           setState(() {
             _isLoading = false;
             _hasError = true;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import 'otp_screen.dart';
 
@@ -115,11 +116,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   maxWidth: cardWidth,
                 ),
                 child: Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
                     padding: EdgeInsets.all(isLargeScreen ? 32.0 : 24.0),
                     child: Form(
                       key: _formKey,
@@ -210,6 +211,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: _mobileController,
                             keyboardType: TextInputType.phone,
+                            textInputAction: TextInputAction.next,
+                            onFieldSubmitted: (_) {
+                              // If Sales Consultant is selected, focus on consultant code field
+                              // Otherwise, trigger login
+                              if (_selectedUserType == 'Sales Consultant') {
+                                // Move focus to consultant code field (will be focused automatically)
+                              } else {
+                                _signIn();
+                              }
+                            },
                             decoration: InputDecoration(
                               labelText: 'Mobile Number',
                               hintText: 'Enter your mobile number',
@@ -250,6 +261,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _consultantCodeController,
                               obscureText: _obscureConsultantCode,
                               keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) {
+                                _signIn();
+                              },
                               decoration: InputDecoration(
                                 labelText: 'Consultant Code',
                                 hintText: 'Enter your 5-7 digit code',

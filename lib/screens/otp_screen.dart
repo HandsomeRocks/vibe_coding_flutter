@@ -67,16 +67,37 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   void _onOtpChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
-      _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
+    if (value.length == 1) {
+      // Move to next field when digit is entered
+      if (index < 3) {
+        _focusNodes[index + 1].requestFocus();
+      }
+    } else if (value.isEmpty) {
+      // Move to previous field when current field is cleared
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
+      }
     }
 
     // Check if all OTP fields are filled
     if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
       _validateOTP();
     }
+  }
+
+  void _handleBackspace(int index) {
+    if (_otpControllers[index].text.isEmpty && index > 0) {
+      // Move to previous field and clear it
+      _focusNodes[index - 1].requestFocus();
+      _otpControllers[index - 1].clear();
+    }
+  }
+
+  void _clearAllOTP() {
+    for (var controller in _otpControllers) {
+      controller.clear();
+    }
+    _focusNodes[0].requestFocus();
   }
 
   Future<void> _validateOTP() async {
@@ -245,46 +266,68 @@ class _OTPScreenState extends State<OTPScreen> {
                           children: List.generate(4, (index) {
                             return SizedBox(
                               width: 60,
-                              child: TextFormField(
-                                controller: _otpControllers[index],
-                                focusNode: _focusNodes[index],
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(1),
-                                ],
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              child: KeyboardListener(
+                                focusNode: FocusNode(),
+                                onKeyEvent: (KeyEvent event) {
+                                  // Handle backspace when field is empty
+                                  if (event is KeyDownEvent && 
+                                      event.logicalKey == LogicalKeyboardKey.backspace) {
+                                    _handleBackspace(index);
+                                  }
+                                },
+                                child: TextFormField(
+                                  controller: _otpControllers[index],
+                                  focusNode: _focusNodes[index],
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey[300]!,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(1),
+                                  ],
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 16,
                                     ),
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Theme.of(context).colorScheme.primary,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
+                                  onChanged: (value) => _onOtpChanged(value, index),
                                 ),
-                                onChanged: (value) => _onOtpChanged(value, index),
                               ),
                             );
                           }),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 16),
+
+                        // Clear All Button
+                        TextButton.icon(
+                          onPressed: _clearAllOTP,
+                          icon: const Icon(Icons.clear_all, size: 16),
+                          label: const Text('Clear All'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[600],
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
 
                         // Loading indicator or validation message
                         if (_isLoading)
